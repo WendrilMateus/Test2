@@ -5,37 +5,43 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 class ChatInput(BaseModel):
     message: str
 
-    @app.get("/")
-    def home():
-        return {"status": "IA online"}
+@app.get("/")
+def home():
+    return {"status": "IA online"}
 
-        @app.post("/chat")
-        def chat(data: ChatInput):
-            headers = {
-                    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                            "Content-Type": "application/json"
-                                }
+@app.post("/chat")
+def chat(data: ChatInput):
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
 
-                                    payload = {
-                                            "model": "mistralai/mistral-7b-instruct",
-                                                    "messages": [
-                                                                {"role": "system", "content": "Você é uma IA criativa focada em criação de histórias e pesquisa."},
-                                                                            {"role": "user", "content": data.message}
-                                                                                    ]
-                                                                                        }
+    payload = {
+        "model": "llama3-8b-8192",
+        "messages": [
+            {
+                "role": "system",
+                "content": "Você é uma IA criativa focada em criação de histórias e pesquisa."
+            },
+            {
+                "role": "user",
+                "content": data.message
+            }
+        ]
+    }
 
-                                                                                            response = requests.post(
-                                                                                                    "https://openrouter.ai/api/v1/chat/completions",
-                                                                                                            headers=headers,
-                                                                                                                    json=payload
-                                                                                                                        )
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers=headers,
+        json=payload
+    )
 
-                                                                                                                            result = response.json()
-                                                                                                                                answer = result["choices"][0]["message"]["content"]
+    result = response.json()
+    answer = result["choices"][0]["message"]["content"]
 
-                                                                                                                                    return {"response": answer}
+    return {"response": answer}
