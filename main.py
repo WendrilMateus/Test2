@@ -12,6 +12,9 @@ class ChatRequest(BaseModel):
 
 @app.post("/chat")
 def chat(req: ChatRequest):
+    if not GROQ_API_KEY:
+        return {"error": "GROQ_API_KEY não encontrada"}
+
     url = "https://api.groq.com/openai/v1/chat/completions"
 
     headers = {
@@ -27,9 +30,14 @@ def chat(req: ChatRequest):
         ]
     }
 
-    response = requests.post(url, headers=headers, json=payload)
-
-    data = response.json()
-    reply = data["choices"][0]["message"]["content"]
-
-    return {"reply": reply}
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        response.raise_for_status()
+        data = response.json()
+        return {"reply": data["choices"][0]["message"]["content"]}
+    except Exception as e:
+        return {
+            "error": "Falha ao chamar Groq",
+            "details": str(e),
+            "raw": response.text if 'response' in locals() else None
+        }
