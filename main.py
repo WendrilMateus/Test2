@@ -6,10 +6,10 @@ app = FastAPI()
 class ChatRequest(BaseModel):
     message: str
 
-    @app.get("/")
-    def root():
-        return {"status": "ok"}
+@app.get("/")
+def root():
+    return {"ok": True}
 
-        @app.post("/chat")
-        def chat(req: ChatRequest):
-            return {"reply": f"Você disse: {req.message}"}
+@app.post("/chat")
+def chat(data: ChatRequest):
+    return {"reply": data.message}
