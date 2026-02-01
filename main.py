@@ -3,45 +3,53 @@ import requests
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-app = FastAPI()
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-
-class ChatInput(BaseModel):
-    message: str
-
-@app.get("/")
-def home():
-    return {"status": "IA online"}
-
 @app.post("/chat")
 def chat(data: ChatInput):
-    headers = {
-        "Authorization": f"Bearer {GROQ_API_KEY}",
-        "Content-Type": "application/json"
-    }
+    if not GROQ_API_KEY:
+            return {
+                        "error": "GROQ_API_KEY não configurada"
+                                }
 
-    payload = {
-        "model": "llama3-8b-8192",
-        "messages": [
-            {
-                "role": "system",
-                "content": "Você é uma IA criativa focada em criação de histórias e pesquisa."
-            },
-            {
-                "role": "user",
-                "content": data.message
-            }
-        ]
-    }
+                                    headers = {
+                                            "Authorization": f"Bearer {GROQ_API_KEY}",
+                                                    "Content-Type": "application/json"
+                                                        }
 
-    response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers=headers,
-        json=payload
-    )
+                                                            payload = {
+                                                                    "model": "llama3-8b-8192",
+                                                                            "messages": [
+                                                                                        {
+                                                                                                        "role": "system",
+                                                                                                                        "content": "Você é uma IA criativa focada em criação de histórias."
+                                                                                                                                    },
+                                                                                                                                                {
+                                                                                                                                                                "role": "user",
+                                                                                                                                                                                "content": data.message
+                                                                                                                                                                                            }
+                                                                                                                                                                                                    ]
+                                                                                                                                                                                                        }
 
-    result = response.json()
-    answer = result["choices"][0]["message"]["content"]
+                                                                                                                                                                                                            response = requests.post(
+                                                                                                                                                                                                                    "https://api.groq.com/openai/v1/chat/completions",
+                                                                                                                                                                                                                            headers=headers,
+                                                                                                                                                                                                                                    json=payload
+                                                                                                                                                                                                                                        )
 
-    return {"response": answer}
+                                                                                                                                                                                                                                            if response.status_code != 200:
+                                                                                                                                                                                                                                                    return {
+                                                                                                                                                                                                                                                                "error": "Erro ao chamar Groq",
+                                                                                                                                                                                                                                                                            "status_code": response.status_code,
+                                                                                                                                                                                                                                                                                        "details": response.text
+                                                                                                                                                                                                                                                                                                }
+
+                                                                                                                                                                                                                                                                                                    result = response.json()
+
+                                                                                                                                                                                                                                                                                                        if "choices" not in result:
+                                                                                                                                                                                                                                                                                                                return {
+                                                                                                                                                                                                                                                                                                                            "error": "Resposta inesperada do Groq",
+                                                                                                                                                                                                                                                                                                                                        "details": result
+                                                                                                                                                                                                                                                                                                                                                }
+
+                                                                                                                                                                                                                                                                                                                                                    return {
+                                                                                                                                                                                                                                                                                                                                                            "response": result["choices"][0]["message"]["content"]
+                                                                                                                                                                                                                                                                                                                                                                }
