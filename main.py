@@ -26,8 +26,22 @@ def chat(req: ChatRequest):
 
     response = requests.post(url, headers=headers, json=payload)
 
+    # 👇 se a OpenAI devolver erro, mostramos
+    if response.status_code != 200:
+        return {
+            "error": "Erro ao chamar OpenAI",
+            "status_code": response.status_code,
+            "details": response.text
+        }
+
     data = response.json()
 
-    reply = data["output"][0]["content"][0]["text"]
+    reply = data.get("output_text")
+
+    if not reply:
+        return {
+            "error": "Resposta inesperada da OpenAI",
+            "raw_response": data
+        }
 
     return {"reply": reply}
